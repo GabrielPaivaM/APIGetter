@@ -56,7 +56,8 @@ headers = {
     "api-key": "100216A23C5AEE390338BBD19EA86D29"
 }
 
-
+start_page= input(f'{Fore.LIGHTCYAN_EX}Por qual pagina deseja começar? {Fore.LIGHTWHITE_EX}1 a 22823: ')
+start_page = int(start_page)
 def isbn13_to_isbn10(isbn13):
     # Remover o hífen, se houver
     isbn13 = isbn13.replace("-", "").replace(" ", "")
@@ -105,11 +106,11 @@ def isbn10_to_isbn13(isbn10):
     return isbn13 + str(check_digit)
 
 
-def fetch_paginated_data(url, headers, total_records, batch_size=100):
+def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page=start_page):
     all_results = []
     total_pages = total_records // batch_size
 
-    for page in range (total_pages + 1):
+    for page in range (start_page - 1, total_pages + 1):
         time.sleep(random.uniform(0.5, 5))
         skip = page * batch_size
 
