@@ -5,6 +5,8 @@ import time
 from colorama import Fore, init
 import requests
 import json
+from functions.convertFunctions import convertFunctions
+
 
 init(autoreset=True)
 
@@ -58,60 +60,13 @@ headers = {
 
 start_page= input(f'{Fore.LIGHTCYAN_EX}Por qual pagina deseja começar? {Fore.LIGHTWHITE_EX}1 a 22823: ')
 start_page = int(start_page)
-def isbn13_to_isbn10(isbn13):
-    # Remover o hífen, se houver
-    isbn13 = isbn13.replace("-", "").replace(" ", "")
-    # Verificar se o ISBN-13 é válido
-    if len(isbn13) != 13 or not isbn13.isdigit() or (isbn13[:3] not in ["978", "979"]):
-        print(isbn13)
-        raise ValueError("ISBN-13 inválido")
-
-    # Manter os últimos 10 dígitos
-    isbn10_candidate = isbn13[3:]
-
-    # Calcular o dígito de controle do ISBN-10
-    total = sum(int(isbn10_candidate[i]) * (10 - i) for i in range(9))
-    check_digit = total % 11
-
-    # Formatar o dígito de controle
-    if check_digit == 10:
-        check_digit_str = 'X'
-    else:
-        check_digit_str = str(check_digit)
-
-    # Retornar o ISBN-10
-    return isbn10_candidate + check_digit_str
-
-
-def isbn10_to_isbn13(isbn10):
-    # Remover o hífen, se houver
-    isbn10 = isbn10.replace("-", "").replace(" ", "")
-
-    # Verificar se o ISBN-10 é válido
-    if len(isbn10) != 10 or not isbn10[:-1].isdigit() or (isbn10[-1] not in "0123456789X"):
-        print(isbn10)
-        raise ValueError("ISBN-10 inválido")
-
-    # Retirar o dígito de controle
-    isbn9 = isbn10[:-1]
-
-    # Adicionar prefixo 978
-    isbn13 = "978" + isbn9
-
-    # Calcular o dígito de controle do ISBN-13
-    total = sum(int(isbn13[i]) * (1 if i % 2 == 0 else 3) for i in range(12))
-    check_digit = (10 - (total % 10)) % 10
-
-    # Retornar o ISBN-13
-    return isbn13 + str(check_digit)
-
 
 def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page=start_page):
     all_results = []
     total_pages = total_records // batch_size
 
     for page in range (start_page - 1, total_pages + 1):
-        time.sleep(random.uniform(0.5, 5))
+        time.sleep(random.uniform(2, 7))
         skip = page * batch_size
 
         data = {
@@ -151,7 +106,7 @@ def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page
                         authors = ""
                         for author in autho:
                             authors = authors + ", " + author
-                        authors = authors[1:]
+                        authors = authors[2:]
 
                     else:
                         authors = None
@@ -161,7 +116,7 @@ def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page
                         countries = ""
                         for country in countr:
                             countries = countries + ", " + country
-                        countries = countries[1:]
+                        countries = countries[2:]
 
                     else:
                         countries = None
@@ -172,7 +127,7 @@ def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page
                         for job in jo:
                             jobs = jobs + ", " + job
 
-                        jobs = jobs[1:]
+                        jobs = jobs[2:]
                     else:
                         jobs = None
 
@@ -182,16 +137,16 @@ def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page
                         for language in languag:
                             languages = languages + ", " + language
 
-                        languages = languages[1:]
+                        languages = languages[2:]
                     else:
                         languages = None
 
                     formatedKey = result['FormattedKey']
 
                     if len(result['RowKey']) == 10 and not 'null' in result['RowKey']:
-                        formatedKey = isbn10_to_isbn13(result['RowKey'])
+                        formatedKey = convertFunctions.isbn10_to_isbn13(result['RowKey'])
                     elif len(result['RowKey']) == 13 and not 'null' in result['RowKey']:
-                        formatedKey = isbn13_to_isbn10(result['RowKey'])
+                        formatedKey = convertFunctions.isbn13_to_isbn10(result['RowKey'])
 
 
                     cursor.execute('''
