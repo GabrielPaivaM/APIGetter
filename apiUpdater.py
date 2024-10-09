@@ -64,10 +64,17 @@ start_page = int(start_page)
 def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page=start_page):
     all_results = []
     total_pages = total_records // batch_size
+    last_record_id = None
 
     for page in range (start_page - 1, total_pages + 1):
         time.sleep(random.uniform(2, 7))
         skip = page * batch_size
+
+        if skip > 100000:
+            filter_value = f"RowKey gt '{last_record_id}'" if last_record_id else ""
+            skip = 0
+        else:
+            filter_value = ""
 
         data = {
             "searchMode": "any",
@@ -75,12 +82,12 @@ def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page
             "queryType": "full",
             "count": True,  # Solicitar a contagem total
             "facets": ["Imprint,count:50", "Authors,count:50"],
-            "filter": "",
-            "orderby": None,
+            "filter": filter_value,
+            "orderby": 'RowKey asc',
             "search": "*",
             "select": "Authors,Profissoes,Colection,Countries,Date,Imprint,Title,Subtitle,RowKey,PartitionKey,RecordId,FormattedKey,Subject,Veiculacao,Ano,IdiomasObra",
-            "skip": skip,  # Valor de 'skip' para a paginação
-            "top": batch_size  # Número máximo de resultados por página
+            "skip": skip,
+            "top": batch_size
         }
 
         # Requisição
@@ -93,6 +100,7 @@ def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page
             print(
                 f"{Fore.LIGHTWHITE_EX}Página {page + 1}/{total_pages + 1} {Fore.LIGHTGREEN_EX}request feito com sucesso.")
 
+            last_record_id = results[-1]['RowKey']
             all_results.extend(results)
             i = 1
             for result in results:
@@ -378,7 +386,7 @@ def fetch_paginated_data(url, headers, total_records, batch_size=100, start_page
             database.commit()
 
         else:
-            print(f"{Fore.LIGHTRED_EX}Erro na requisição da página {Fore.LIGHTWHITE_EX}{page + 1}: {response.status_code}")
+            print(f"{Fore.LIGHTRED_EX}Erro na requisição da página {Fore.LIGHTWHITE_EX}{page + 1}: {response.status_code} {response.text}")
             break  # Interrompe se houver erro
 
     return all_results
